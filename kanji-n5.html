@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Kuis Kanji N5</title>
+    <style>
+        /* variabel warna (light mode) */
+        :root {
+            --color-text-primary: #1e1e2f;
+            --color-text-secondary: #5a5a6e;
+            --color-text-success: #2b7e3a;
+            --color-text-danger: #c23d3d;
+            --color-background-primary: #ffffff;
+            --color-background-success: #e6f4ea;
+            --color-background-danger: #fee9e9;
+            --color-border-secondary: #d0d0dd;
+            --color-border-tertiary: #eaeef2;
+            --color-border-success: #2b7e3a;
+            --color-border-danger: #c23d3d;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f5f7fb;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        /* reset button */
+        button {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        /* utility */
+        .quiz-container {
+            padding: 1.5rem 1rem;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--color-background-primary);
+            border: 0.5px solid var(--color-border-tertiary);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .btn {
+            background: transparent;
+            border: 0.5px solid var(--color-border-secondary);
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 14px;
+            color: var(--color-text-primary);
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            transition: all 0.1s ease;
+        }
+
+        .btn:hover {
+            background: #f0f2f5;
+        }
+
+        .tag {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+        }
+
+        .muted {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        .big-kanji {
+            font-size: 72px;
+            font-weight: 400;
+            text-align: center;
+            color: var(--color-text-primary);
+            letter-spacing: -2px;
+            line-height: 1.1;
+        }
+
+        .small-note {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            text-align: center;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--color-border-tertiary);
+            border-radius: 4px;
+            margin: 0 0 1.25rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--color-text-secondary);
+            border-radius: 4px;
+            transition: width 0.2s ease;
+            width: 0%;
+        }
+
+        .flex-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+
+        .mb-2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .mb-3 {
+            margin-bottom: 1rem;
+        }
+
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .w-auto {
+            width: auto;
+        }
+
+        .gap-2 {
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+<div id="kanjiQuizRoot" class="quiz-container"></div>
+
+<script>
+    // ---------- DATA ----------
+    const KANJI_DATA = [
+        { kanji: "一", romaji: "ichi / hito-", meaning: "satu" },
+        { kanji: "二", romaji: "ni / futa-", meaning: "dua" },
+        { kanji: "三", romaji: "san / mi-", meaning: "tiga" },
+        { kanji: "四", romaji: "shi / yon / yo-", meaning: "empat" },
+        { kanji: "五", romaji: "go / itsu-", meaning: "lima" },
+        { kanji: "六", romaji: "roku / mu-", meaning: "enam" },
+        { kanji: "七", romaji: "shichi / nana", meaning: "tujuh" },
+        { kanji: "八", romaji: "hachi / ya-", meaning: "delapan" },
+        { kanji: "九", romaji: "ku / kyuu / kokono-", meaning: "sembilan" },
+        { kanji: "十", romaji: "juu / too", meaning: "sepuluh" },
+        { kanji: "百", romaji: "hyaku", meaning: "seratus" },
+        { kanji: "千", romaji: "sen / chi", meaning: "seribu" },
+        { kanji: "万", romaji: "man / yorozu", meaning: "sepuluh ribu" },
+        { kanji: "円", romaji: "en / maru", meaning: "yen / lingkaran" },
+        { kanji: "日", romaji: "nichi / hi / ka", meaning: "hari / matahari" },
+        { kanji: "月", romaji: "tsuki / getsu / gatsu", meaning: "bulan" },
+        { kanji: "火", romaji: "hi / ka", meaning: "api" },
+        { kanji: "水", romaji: "mizu / sui", meaning: "air" },
+        { kanji: "木", romaji: "ki / moku", meaning: "pohon / kayu" },
+        { kanji: "金", romaji: "kin / kane", meaning: "emas / uang" },
+        { kanji: "土", romaji: "tsuchi / do / to", meaning: "tanah" },
+        { kanji: "大", romaji: "oo- / dai / tai", meaning: "besar" },
+        { kanji: "中", romaji: "naka / chuu", meaning: "tengah / dalam" },
+        { kanji: "小", romaji: "chii- / shoo", meaning: "kecil" },
+        { kanji: "上", romaji: "ue / joo", meaning: "atas" },
+        { kanji: "下", romaji: "shita / ka / ge", meaning: "bawah" },
+        { kanji: "人", romaji: "hito / jin / nin", meaning: "orang" },
+        { kanji: "女", romaji: "onna / jo / nyo", meaning: "perempuan" },
+        { kanji: "男", romaji: "otoko / dan / nan", meaning: "laki-laki" },
+        { kanji: "子", romaji: "ko / shi / su", meaning: "anak" },
+        { kanji: "父", romaji: "chichi / fu", meaning: "ayah" },
+        { kanji: "母", romaji: "haha / bo", meaning: "ibu" },
+        { kanji: "山", romaji: "yama / san", meaning: "gunung" },
+        { kanji: "川", romaji: "kawa / sen", meaning: "sungai" },
+        { kanji: "天", romaji: "ten / ame", meaning: "langit / surga" },
+        { kanji: "気", romaji: "ki / ke", meaning: "semangat / udara" },
+        { kanji: "国", romaji: "kuni / koku", meaning: "negara" },
+        { kanji: "今", romaji: "ima / kon / kin", meaning: "sekarang" },
+        { kanji: "何", romaji: "nani / nan", meaning: "apa" },
+        { kanji: "時", romaji: "toki / ji", meaning: "waktu / jam" },
+        { kanji: "午", romaji: "go", meaning: "siang (tengah hari)" },
+        { kanji: "前", romaji: "mae / zen", meaning: "depan / sebelum" },
+        { kanji: "後", romaji: "ato / ushiro / go / koo", meaning: "belakang / sesudah" },
+        { kanji: "右", romaji: "migi / u / yuu", meaning: "kanan" },
+        { kanji: "左", romaji: "hidari / sa", meaning: "kiri" },
+        { kanji: "毎", romaji: "mai", meaning: "setiap" },
+        { kanji: "年", romaji: "toshi / nen", meaning: "tahun" },
+        { kanji: "北", romaji: "kita / hoku", meaning: "utara" },
+        { kanji: "南", romaji: "minami / nan", meaning: "selatan" },
+        { kanji: "東", romaji: "higashi / too", meaning: "timur" },
+        { kanji: "西", romaji: "nishi / sei / sai", meaning: "barat" },
+        { kanji: "外", romaji: "soto / gai / ge", meaning: "luar" },
+        { kanji: "名", romaji: "na / mei / myoo", meaning: "nama" },
+        { kanji: "先", romaji: "saki / sen", meaning: "depan / dahulu" },
+        { kanji: "本", romaji: "hon / moto", meaning: "buku / asal" },
+        { kanji: "間", romaji: "aida / ma / kan / ken", meaning: "antara / ruang" },
+        { kanji: "高", romaji: "taka- / koo", meaning: "tinggi / mahal" },
+        { kanji: "半", romaji: "han", meaning: "setengah" },
+        { kanji: "長", romaji: "naga- / choo", meaning: "panjang / kepala" },
+        { kanji: "白", romaji: "shiro / haku / byaku", meaning: "putih" },
+        { kanji: "分", romaji: "fun / bun / wa-", meaning: "menit / bagian" },
+        { kanji: "雨", romaji: "ame / u", meaning: "hujan" },
+        { kanji: "電", romaji: "den", meaning: "listrik" },
+        { kanji: "車", romaji: "kuruma / sha", meaning: "mobil / kendaraan" },
+        { kanji: "友", romaji: "tomo / yuu", meaning: "teman" },
+        { kanji: "休", romaji: "yasu- / kyuu", meaning: "istirahat" },
+        { kanji: "入", romaji: "hai- / i- / nyuu", meaning: "masuk" },
+        { kanji: "出", romaji: "de- / da- / shutsu", meaning: "keluar" },
+        { kanji: "行", romaji: "i- / yu- / koo / gyoo", meaning: "pergi" },
+        { kanji: "来", romaji: "ku- / ki- / rai", meaning: "datang" },
+        { kanji: "学", romaji: "mana- / gaku", meaning: "belajar" },
+        { kanji: "校", romaji: "koo", meaning: "sekolah" },
+        { kanji: "食", romaji: "ta- / shoku", meaning: "makan / makanan" },
+        { kanji: "見", romaji: "mi- / ken", meaning: "melihat" },
+        { kanji: "聞", romaji: "ki- / bun / mon", meaning: "mendengar" },
+        { kanji: "書", romaji: "ka- / sho", meaning: "menulis" },
+        { kanji: "生", romaji: "i- / u- / nama / sei / shoo", meaning: "hidup / lahir" },
+        { kanji: "話", romaji: "hanashi / wa", meaning: "berbicara / cerita" },
+        { kanji: "語", romaji: "kata- / go", meaning: "bahasa / kata" },
+        { kanji: "読", romaji: "yo- / doku / toku", meaning: "membaca" },
+    ];
+
+    // ---------- helpers ----------
+    function shuffle(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    function getChoices(correctKanjiObj, allData, field) {
+        const pool = allData.filter(k => k.kanji !== correctKanjiObj.kanji);
+        const wrong = shuffle(pool).slice(0, 3).map(k => k[field]);
+        const choices = shuffle([correctKanjiObj[field], ...wrong]);
+        return choices;
+    }
+
+    const QUIZ_TYPES = [
+        { id: "meaning", label: "Kanji → Arti", question: "Apa arti kanji ini?", field: "meaning" },
+        { id: "romaji", label: "Kanji → Romaji", question: "Apa bacaan romaji kanji ini?", field: "romaji" },
+        { id: "reverse", label: "Arti → Kanji", question: "Pilih kanji yang tepat!", field: "kanji" },
+    ];
+
+    const MODES = { MENU: "menu", QUIZ: "quiz", FLASH: "flash", REVIEW: "review" };
+
+    // ---------- state ----------
+    let state = {
+        mode: MODES.MENU,
+        quizType: QUIZ_TYPES[0],
+        deck: [],           // array of kanji objects for quiz
+        current: 0,
+        choices: [],
+        selected: null,
+        score: 0,
+        results: [],
+        flashDeck: [],
+        flashIdx: 0,
+        flashFlipped: false
+    };
+
+    let rootEl = document.getElementById("kanjiQuizRoot");
+    let keyboardHandler = null;
+
+    // ---------- actions ----------
+    function startQuiz(type) {
+        const shuffledDeck = shuffle(KANJI_DATA);
+        state = {
+            ...state,
+            mode: MODES.QUIZ,
+            quizType: type,
+            deck: shuffledDeck,
+            current: 0,
+            score: 0,
+            results: [],
+            selected: null,
+        };
+        const firstChoices = getChoices(shuffledDeck[0], KANJI_DATA, type.field);
+        state.choices = firstChoices;
+        render();
+    }
+
+    function startFlash() {
+        if (keyboardHandler) document.removeEventListener("keydown", keyboardHandler);
+        state = {
+            ...state,
+            mode: MODES.FLASH,
+            flashDeck: shuffle(KANJI_DATA),
+            flashIdx: 0,
+            flashFlipped: false,
+        };
+        render();
+        attachFlashKeyboard();
+    }
+
+    function handleAnswer(choice) {
+        if (state.selected !== null) return;
+        const currentItem = state.deck[state.current];
+        const correctAns = currentItem[state.quizType.field];
+        const isCorrect = choice === correctAns;
+        const newScore = isCorrect ? state.score + 1 : state.score;
+        const newResults = [...state.results, { ...currentItem, correct: isCorrect, chosen: choice }];
+        state = {
+            ...state,
+            selected: choice,
+            score: newScore,
+            results: newResults,
+        };
+        render();
+    }
+
+    function nextQuestion() {
+        const nextIdx = state.current + 1;
+        if (nextIdx >= state.deck.length) {
+            state = { ...state, mode: MODES.REVIEW };
+            render();
+            return;
+        }
+        const newChoices = getChoices(state.deck[nextIdx], KANJI_DATA, state.quizType.field);
+        state = {
+            ...state,
+            current: nextIdx,
+            selected: null,
+            choices: newChoices,
+        };
+        render();
+    }
+
+    function flashNext(direction) {
+        let newIdx = state.flashIdx + direction;
+        if (newIdx < 0) newIdx = state.flashDeck.length - 1;
+        if (newIdx >= state.flashDeck.length) newIdx = 0;
+        state = {
+            ...state,
+            flashIdx: newIdx,
+            flashFlipped: false
+        };
+        render();
+    }
+
+    function toggleFlashFlip() {
+        state = { ...state, flashFlipped: !state.flashFlipped };
+        render();
+    }
+
+    function goToMenu() {
+        if (keyboardHandler) document.removeEventListener("keydown", keyboardHandler);
+        state = {
+            mode: MODES.MENU,
+            quizType: QUIZ_TYPES[0],
+            deck: [],
+            current: 0,
+            choices: [],
+            selected: null,
+            score: 0,
+            results: [],
+            flashDeck: [],
+            flashIdx: 0,
+            flashFlipped: false
+        };
+        render();
+    }
+
+    function attachFlashKeyboard() {
+        if (keyboardHandler) document.removeEventListener("keydown", keyboardHandler);
+        keyboardHandler = (e) => {
+            if (state.mode !== MODES.FLASH) return;
+            if (e.key === "ArrowLeft") {
+                e.preventDefault();
+                flashNext(-1);
+            } else if (e.key === "ArrowRight") {
+                e.preventDefault();
+                flashNext(1);
+            }
+        };
+        document.addEventListener("keydown", keyboardHandler);
+    }
+
+    // ---------- rendering components ----------
+    function renderMenu() {
+        return `
+            <div>
+                <h2 style="font-size: 18px; margin: 0 0 0.25rem;">Kuis Kanji N5</h2>
+                <p class="muted" style="margin-bottom: 1.5rem;">${KANJI_DATA.length} kanji · pilih mode belajar</p>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div class="card" style="margin-bottom: 4px;">
+                        <p style="margin: 0 0 10px; font-size: 13px; font-weight: 500; color: var(--color-text-secondary);">Mode kuis (pilihan ganda)</p>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${QUIZ_TYPES.map(t => `
+                                <button class="btn quiz-start-btn" data-type='${JSON.stringify(t)}'>${t.label}</button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <button class="btn flash-start-btn" style="text-align: center;">Kartu Flash (hafalan)</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderQuiz() {
+        const item = state.deck[state.current];
+        const correctAns = item[state.quizType.field];
+        const displayKanji = state.quizType.id === "reverse";
+        const progressPercent = (state.current / state.deck.length) * 100;
+        return `
+            <div>
+                <div class="flex-row" style="justify-content: space-between; margin-bottom: 1rem;">
+                    <button class="btn menu-back-btn" style="width: auto; padding: 6px 12px; font-size: 13px;">← Kembali</button>
+                    <span class="muted">${state.current+1} / ${state.deck.length} · Skor: ${state.score}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${progressPercent}%;"></div>
+                </div>
+                <div class="card text-center" style="margin-bottom: 1rem;">
+                    <p class="muted" style="margin: 0 0 10px;">${state.quizType.question}</p>
+                    ${displayKanji ? `<p style="margin:0; font-size: 1.2rem; font-weight:500;">${item.meaning}</p>` : `<div class="big-kanji">${item.kanji}</div>`}
+                </div>
+                <div class="grid-2">
+                    ${state.choices.map(choice => {
+                        let borderColor = "var(--color-border-secondary)";
+                        let bg = "transparent";
+                        let color = "var(--color-text-primary)";
+                        if (state.selected !== null) {
+                            if (choice === correctAns) {
+                                borderColor = "var(--color-border-success)";
+                                bg = "var(--color-background-success)";
+                                color = "var(--color-text-success)";
+                            } else if (choice === state.selected) {
+                                borderColor = "var(--color-border-danger)";
+                                bg = "var(--color-background-danger)";
+                                color = "var(--color-text-danger)";
+                            }
+                        }
+                        const fontSize = state.quizType.id === "reverse" ? "28px" : "13px";
+                        const padding = state.quizType.id === "reverse" ? "12px 8px" : "10px 12px";
+                        return `<button class="quiz-choice-btn" data-choice="${choice.replace(/"/g, '&quot;')}" style="background:${bg}; border-color:${borderColor}; color:${color}; font-size:${fontSize}; padding:${padding}; text-align:center;">${choice}</button>`;
+                    }).join('')}
+                </div>
+                ${state.selected !== null ? `
+                    <div class="mt-4 text-center">
+                        ${state.selected === correctAns ? '<p class="muted" style="color:var(--color-text-success); font-weight:500;">Benar!</p>' : `<p class="muted" style="color:var(--color-text-danger); font-weight:500;">Salah · Jawaban: ${correctAns}</p>`}
+                        <button class="btn next-quiz-btn" style="width:auto; padding:8px 24px; margin:0 auto; display:inline-block;">${state.current+1 >= state.deck.length ? "Lihat Hasil" : "Lanjut →"}</button>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    function renderFlash() {
+        const card = state.flashDeck[state.flashIdx];
+        const progressPercent = (state.flashIdx / state.flashDeck.length) * 100;
+        return `
+            <div>
+                <div class="flex-row" style="margin-bottom: 1.25rem;">
+                    <button class="btn menu-back-btn" style="width: auto; padding: 6px 12px; font-size: 13px;">← Kembali</button>
+                    <span class="muted">${state.flashIdx+1} / ${state.flashDeck.length}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${progressPercent}%;"></div>
+                </div>
+                <div class="card flash-card" style="cursor: pointer; min-height: 220px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px;">
+                    ${!state.flashFlipped ? `
+                        <div class="big-kanji">${card.kanji}</div>
+                        <span class="small-note">ketuk untuk lihat jawaban</span>
+                    ` : `
+                        <div class="big-kanji">${card.kanji}</div>
+                        <div class="text-center">
+                            <p style="margin:0 0 4px; font-weight:500;">${card.meaning}</p>
+                            <p class="muted" style="margin:0;">${card.romaji}</p>
+                        </div>
+                    `}
+                </div>
+                <div class="flex-row" style="margin-top: 1rem; justify-content: center; gap: 10px;">
+                    <button class="btn flash-prev" style="width: auto; padding: 8px 20px;">←</button>
+                    <button class="btn flash-next" style="width: auto; padding: 8px 20px;">→</button>
+                </div>
+                <p class="small-note" style="margin-top:1rem;">atau tekan ← → keyboard</p>
+            </div>
+        `;
+    }
+
+    function renderReview() {
+        const total = state.deck.length;
+        const score = state.score;
+        const pct = total ? Math.round((score / total) * 100) : 0;
+        const wrong = state.results.filter(r => !r.correct);
+        return `
+            <div>
+                <h2 style="font-size: 20px; font-weight:500; margin:0 0 1rem;">Hasil Kuis</h2>
+                <div class="card text-center" style="margin-bottom: 1.25rem;">
+                    <div style="font-size: 48px; font-weight:500; color: ${pct>=70 ? "var(--color-text-success)" : "var(--color-text-danger)"};">${pct}%</div>
+                    <p class="muted" style="margin:4px 0 0;">${score} benar dari ${total} soal</p>
+                </div>
+                ${wrong.length > 0 ? `
+                    <p class="muted" style="margin-bottom: 10px;">Perlu dipelajari lagi (${wrong.length} kanji):</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(90px,1fr)); gap: 8px; margin-bottom: 1.25rem;">
+                        ${wrong.map(r => `
+                            <div class="card text-center" style="padding: 10px 8px;">
+                                <div style="font-size: 32px;">${r.kanji}</div>
+                                <p class="muted" style="margin:4px 0 0; font-size:11px;">${r.meaning}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn retry-quiz-btn" style="flex:1; text-align:center;">Ulangi Kuis</button>
+                    <button class="btn menu-back-btn" style="flex:1; text-align:center;">Menu Utama</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // main render
+    function render() {
+        let html = '';
+        if (state.mode === MODES.MENU) html = renderMenu();
+        else if (state.mode === MODES.QUIZ) html = renderQuiz();
+        else if (state.mode === MODES.FLASH) html = renderFlash();
+        else if (state.mode === MODES.REVIEW) html = renderReview();
+        else html = '<div>Error</div>';
+        rootEl.innerHTML = html;
+        attachEvents();
+    }
+
+    // attach event listeners after render
+    function attachEvents() {
+        // menu
+        document.querySelectorAll('.quiz-start-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const typeData = btn.getAttribute('data-type');
+                if (typeData) {
+                    const parsed = JSON.parse(typeData);
+                    startQuiz(parsed);
+                }
+            });
+        });
+        const flashStart = document.querySelector('.flash-start-btn');
+        if (flashStart) flashStart.addEventListener('click', startFlash);
+
+        // common back to menu
+        document.querySelectorAll('.menu-back-btn').forEach(btn => {
+            btn.addEventListener('click', goToMenu);
+        });
+
+        // quiz choices
+        document.querySelectorAll('.quiz-choice-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (state.selected !== null) return;
+                const choice = btn.getAttribute('data-choice');
+                if (choice) handleAnswer(choice);
+            });
+        });
+        const nextBtn = document.querySelector('.next-quiz-btn');
+        if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
+
+        // flashcard
+        const flashCardDiv = document.querySelector('.flash-card');
+        if (flashCardDiv) flashCardDiv.addEventListener('click', toggleFlashFlip);
+        const prevFlash = document.querySelector('.flash-prev');
+        if (prevFlash) prevFlash.addEventListener('click', () => flashNext(-1));
+        const nextFlash = document.querySelector('.flash-next');
+        if (nextFlash) nextFlash.addEventListener('click', () => flashNext(1));
+
+        // review retry
+        const retryBtn = document.querySelector('.retry-quiz-btn');
+        if (retryBtn) retryBtn.addEventListener('click', () => startQuiz(state.quizType));
+    }
+
+    // initial render
+    render();
+</script>
+</body>
+</html>
