@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Post Archiver (X + Pixiv)
 // @namespace    Archiver
-// @version      0.2
-// @description  Arsipin post X dan artwork Pixiv (gambar + caption) jadi satu file HTML
+// @version      0.3
+// @description  Arsipin post X dan artwork Pixiv (gambar + caption)
 // @match        https://x.com/*
 // @match        https://twitter.com/*
 // @match        https://www.pixiv.net/*
@@ -15,8 +15,6 @@
 
 (function () {
   'use strict';
-
-  // ============ UTILITAS BERSAMA ============
 
   function fetchAsBase64(url, headers) {
     return new Promise((resolve, reject) => {
@@ -106,8 +104,6 @@
     return (str || 'post').replace(/[^a-z0-9_]/gi, '').slice(0, 40);
   }
 
-  // ============ MODUL X ============
-
   const XArchiver = (function () {
     const PROCESSED_ATTR = 'data-archiver';
     const ICON_SVG = `
@@ -172,13 +168,15 @@
         const { displayName, handle } = getAuthorInfo(article);
         const permalink = getPermalink(article);
 
+        const tweetId = permalink.match(/\/status\/(\d+)/)?.[1] || Date.now();
+
         const base64Images = await Promise.all(images.map((u) => fetchAsBase64(u)));
         const html = buildHtml({
           displayName, handle, caption, permalink,
           images: base64Images, sourceLabel: 'Sumber',
         });
 
-        const filename = `x_${sanitizeFilename(handle)}_${Date.now()}.html`;
+        const filename = `x_${sanitizeFilename(handle || 'unknown')}_${tweetId}.html`;
         downloadHtml(filename, html);
       } catch (err) {
         console.error('[X Archiver] Gagal arsip:', err);
@@ -226,8 +224,6 @@
 
     return { init };
   })();
-
-  // ============ MODUL PIXIV ============
 
   const PixivArchiver = (function () {
     function getIllustId() {
@@ -317,13 +313,10 @@
     return { init };
   })();
 
-  // ============ ROUTING ============
-
   const host = location.hostname;
   if (host === 'x.com' || host === 'twitter.com') {
     XArchiver.init();
   } else if (host === 'www.pixiv.net') {
-    // Pixiv adalah SPA, URL bisa berubah tanpa reload halaman
     let lastPath = location.pathname;
     PixivArchiver.init();
     setInterval(() => {
